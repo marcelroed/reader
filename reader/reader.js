@@ -6,6 +6,8 @@
 
 **/
 
+/* Test */
+
 
 var state, controlPanel, select, infoBox;
 var curPage = 0, time, pageTime = 0, sesTime = 0;
