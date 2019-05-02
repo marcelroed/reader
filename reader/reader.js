@@ -115,7 +115,8 @@ function updateInfoBox(){
 	// Current page
 	infoBox.curPage = curPage;
 	// Estimated time
-	infoBox.estTime = infoBox.avgTime*controlPanel.countPages(curPage);
+	infoBox.estTime = infoBox.avgTime * controlPanel.countPages(curPage);
+	infoBox.sectionTime = infoBox.avgTime * controlPanel.countSection(curPage);
 	// ETA
 	let today = new Date();
 	let finishedDate = new Date(today.getTime() + infoBox.estTime*1000);
@@ -399,6 +400,14 @@ function init(){
 					pages += this.intervals[i][1] - this.intervals[i][0] + 1;
 				}
 				return pages;
+			},
+			countSection: function(page){
+				console.log(this.intervals);
+				console.log(page);
+				let interval = this.intervals.find(interval => interval[0] <= page && page <= interval[1]);
+				console.log(interval);
+				console.log(interval[1] - page + 1);
+				return interval[1] - page + 1;
 			}
 		}
 	});
@@ -409,6 +418,7 @@ function init(){
 			curPage: null,
 			avgTime: null,
 			estTime: null,
+			sectionTime: null,
 			sesTime: null,
 			pagesRead: null,
 			eta: null
@@ -421,7 +431,9 @@ function init(){
 				return getTimeString(this.avgTime, true);
 			},
 			estimatedTime: function(){
-				return getTimeString(this.estTime, false, true);
+				if (this.estTime == null)
+					return '';
+				return `${getTimeString(this.estTime, false, true)} (${getTimeString(this.sectionTime, false, true)})`;
 			},
 			sessionTime: function(){
 				return getTimeString(this.sesTime);
