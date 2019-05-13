@@ -22,7 +22,7 @@ var play = new Button(function(){
 	error = validateIntervals();
 	if(error === false){
 		setState("playing");
-		if(controlPanel.beginPage == undefined){
+		if(controlPanel.beginPage === undefined){
 			curPage = -10000;
 		}else{
 			curPage = controlPanel.beginPage - 1;
@@ -47,7 +47,7 @@ var split = new Button(function(){
 	controlPanel.selectedBook.times[curPage] = pageTime/1000;
 	if(controlPanel.liveTime) elements['subtimer'].text(getTimeString(pageTime/1000));
 	else{
-		if(elements['timer'].text() != '0:00') elements['subtimer'].text(elements['timer'].text().slice(0,-3))
+		if(elements['timer'].text() !== '0:00') elements['subtimer'].text(elements['timer'].text().slice(0,-3))
 		elements['timer'].text(getTimeString(pageTime/1000, true));
 	}
 	if (!nextPage()){
@@ -77,11 +77,11 @@ var availableButtons = {
 	split: split
 };
 
-var states = {
+const states = {
 	initial: new State("initial", ["play"], [["pause", "play"]]),
 	playing: new State("playing", ["split", "pause", "resetPageTime", "stop"], [["play", "split"], ["resume", "pause"]]),
 	paused: new State("paused", ["split", "resume", "resetPageTime", "stop"], [["pause", "resume"]])
-}
+};
 
 function Button(ability, tag, classes, buttonLabel, icon = null){
 	this.tag = tag;
@@ -120,12 +120,14 @@ function updateInfoBox(){
 	// ETA
 	let today = new Date();
 	let finishedDate = new Date(today.getTime() + infoBox.estTime*1000);
+	let sectionFinishedDate = new Date(today.getTime() + infoBox.sectionTime*1000);
 	infoBox.eta = finishedDate.getHours() + ":" + ("0" + finishedDate.getMinutes()).slice(-2);
+	infoBox.sectionEta = sectionFinishedDate.getHours() + ":" + ("0" + sectionFinishedDate.getMinutes()).slice(-2);
 }
 
 function nextPage(){
 	let firstInterval = controlPanel.selectedBook.intervals.find(i => i[1] > curPage);
-	if (firstInterval == undefined){
+	if (firstInterval === undefined){
 		// Finished reading
 		console.log("Finished reading");
 		controlPanel.beginPage = null;
@@ -202,7 +204,7 @@ function addButton(b, before=false){
 }
 
 function getIconElement(iconName){
-	let icon = $("<img></img>");
+	let icon = $("<img/>");
 	icon.attr({
 		src: button.icon + ".svg",
 		class: "svg-icon svg-baseline"
@@ -240,7 +242,7 @@ function bookChange(select){
 function selectBook(select, bookName){
 	let opts = select.options;
 	for (let opt, j = 0; opt = opts[j]; j++) {
-	  if (opt.value == bookName) {
+	  if (opt.value === bookName) {
 	    select.selectedIndex = j;
 	    break;
 	  }
@@ -249,7 +251,7 @@ function selectBook(select, bookName){
 
 function addBookHandler(){
 	let input = prompt("Book name to add: ");
-	if(input != "" && input != 0 && input != null){
+	if(input !== "" && input !== 0 && input != null){
 		if(!controlPanel.books.map(b => b.tag).includes(input)){
 			addBook(input);
 			controlPanel.selected = input;
@@ -265,7 +267,7 @@ function removeBookHandler(){
 	if(!confirm("Are you sure you want to remove book " + '"' + controlPanel.selected + '"?')){
 		return;
 	}
-	controlPanel.books.splice(controlPanel.books.findIndex(b => b.tag == controlPanel.selected), 1);
+	controlPanel.books.splice(controlPanel.books.findIndex(b => b.tag === controlPanel.selected), 1);
 	controlPanel.selected = '';
 	controlPanel.selectedBook = null;
 }
@@ -277,7 +279,7 @@ function addBook(bookName){
 
 function renameBookHandler(){
 	let input = prompt("New book name for " + '"' + controlPanel.selected + '": ');
-	if(input == null || input == ''){
+	if(input == null || input === ''){
 		return;
 	}
 	controlPanel.selectedBook.tag = input;
@@ -309,8 +311,8 @@ function init(){
 		},
 		watch: {
 			selected: function(value){
-				if(value != ''){
-					this.selectedBook = this.books.find(b => b.tag == value);
+				if(value !== ''){
+					this.selectedBook = this.books.find(b => b.tag === value);
 					this.beginPage = this.selectedBook.page;
 					$("#play").prop("disabled", false);
 				}else{
@@ -346,7 +348,7 @@ function init(){
 		},
 		computed: {
 			getSelectImage: function(idx){
-				if($.inArray(intervals[idx], selectedIntervals) == -1){
+				if($.inArray(intervals[idx], selectedIntervals) === -1){
 					return "unchecked.png";
 				}else{
 					return "checked.png";
@@ -378,10 +380,10 @@ function init(){
 				sortIntervals();
 			},
 			countPages: function(from){
-				if(this.intervals.length == 0)
+				if(this.intervals.length === 0)
 					return 0;
 				// Call with no argument to count all
-				if(from == undefined){
+				if(from === undefined){
 					let pages = 0;
 					this.intervals.forEach(i => pages += i[1] - i[0] + 1);
 					return pages;
@@ -393,7 +395,7 @@ function init(){
 						break;
 					}
 				}
-				if(this.intervals[i] != undefined)
+				if(this.intervals[i] !== undefined)
 					pages += this.intervals[i][1] - (from > this.intervals[i][0] ? from : this.intervals[i][0]) + 1;
 
 				for(i++; i < this.intervals.length; i++){
@@ -421,7 +423,8 @@ function init(){
 			sectionTime: null,
 			sesTime: null,
 			pagesRead: null,
-			eta: null
+			eta: null,
+			sectionEta: null
 		},
 		computed: {
 			currentPage: function(){
@@ -434,6 +437,12 @@ function init(){
 				if (this.estTime == null)
 					return '';
 				return `${getTimeString(this.estTime, false, true)} (${getTimeString(this.sectionTime, false, true)})`;
+			},
+			etaString: function(){
+				if(this.sectionEta == null){
+					return '';
+                }
+				return `${this.eta} (${this.sectionEta})`;
 			},
 			sessionTime: function(){
 				return getTimeString(this.sesTime);
@@ -468,7 +477,7 @@ function init(){
 		resetProgressBars(true);
 	}
 
-	if(controlPanel.selected == ''){
+	if(controlPanel.selected === ''){
 		$("#play").prop("disabled", true);
 	}
 	select = document.getElementsByClassName("book-drop-down")[0];
@@ -479,27 +488,27 @@ function init(){
 	};
 	document.addEventListener('keydown', function(event) {
 		// P
-		if(event.keyCode == 80) {
-			if(state.tag == "initial" && !$("#play").prop("disabled")){
+		if(event.keyCode === 80) {
+			if(state.tag === "initial" && !$("#play").prop("disabled")){
 				play.ability();
-			}else if(state.tag == "playing"){
+			}else if(state.tag === "playing"){
 				pause.ability();
-			}else if(state.tag == "paused"){
+			}else if(state.tag === "paused"){
 				resume.ability();
 			}
 		}
 		// Space
-		else if(event.keyCode == 32) {
-			if(state.tag == "initial" && !$("#play").prop("disabled")){
+		else if(event.keyCode === 32) {
+			if(state.tag === "initial" && !$("#play").prop("disabled")){
 				play.ability();
-			}else if(state.tag == "playing" || state.tag == "paused"){
+			}else if(state.tag === "playing" || state.tag === "paused"){
 				split.ability();
 			}
 		}
-		else if(event.keyCode == 32) {
-			if(state.tag == "initial" && !$("#play").prop("disabled")){
+		else if(event.keyCode === 32) {
+			if(state.tag === "initial" && !$("#play").prop("disabled")){
 				play.ability();
-			}else if(state.tag == "playing" || state.tag == "paused"){
+			}else if(state.tag === "playing" || state.tag === "paused"){
 				split.ability();
 			}
 		}
@@ -508,7 +517,7 @@ function init(){
 }
 
 function validateIntervals(){
-	if(controlPanel.intervals == null || controlPanel.intervals.length == 0){
+	if(controlPanel.intervals == null || controlPanel.intervals.length === 0){
 		return "Book must contain one or more intervals."
 	}
 	for(let i = 0; i < controlPanel.intervals.length; i++){
@@ -528,7 +537,7 @@ function sortIntervals(){
 
 function updateTime(){
 	let newTime = new Date().getTime();
-	if(state.tag == "playing"){
+	if(state.tag === "playing"){
 		pageTime += newTime - time;
 		sesTime += newTime - time;
 		if(controlPanel.liveTime) elements['timer'].text(getTimeString(pageTime/1000, true));
